@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">ShamikoX</string>
+    <string name="request_root">Request Root</string>
+    <string name="whitelist_mode">Whitelist Mode</string>
+    <string name="blacklist_mode">Blacklist Mode</string>
+    <string name="stop_server">Stop Server</string>
+    <string name="start_server">Start Server</string>
+</resources>

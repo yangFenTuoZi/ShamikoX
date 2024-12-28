@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">ShamikoX</string>
+    <string name="request_root">请求Root</string>
+    <string name="whitelist_mode">白名单模式</string>
+    <string name="blacklist_mode">黑名单模式</string>
+    <string name="stop_server">停止服务</string>
+    <string name="start_server">启动服务</string>
+</resources>
