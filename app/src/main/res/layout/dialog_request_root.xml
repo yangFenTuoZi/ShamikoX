@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:orientation="vertical"
     android:paddingStart="20dp"
     android:paddingTop="10dp"
     android:paddingEnd="20dp">
@@ -17,10 +18,19 @@
             android:id="@+id/uid"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColorHint="#546E7A"
             android:digits="1234567890"
-            android:maxLength="8"/>
+            android:maxLength="8"
+            android:textColorHint="#546E7A" />
 
     </com.google.android.material.textfield.TextInputLayout>
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/choose_app"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="5dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginEnd="5dp"
+        android:text="@string/choose" />
 
 </LinearLayout>

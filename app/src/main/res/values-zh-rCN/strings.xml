@@ -5,4 +5,18 @@
     <string name="blacklist_mode">黑名单模式</string>
     <string name="stop_server">停止服务</string>
     <string name="start_server">启动服务</string>
+    <string name="loading">正在加载…</string>
+    <string name="end">末尾</string>
+    <string name="exec_running">执行中…</string>
+    <string name="exec_finish">结束</string>
+    <string name="exec_return">返回值: %d(%s)</string>
+    <string name="exec_normal">正常</string>
+    <string name="exec_command_not_found">找不到命令</string>
+    <string name="exec_segmentation_error">分段错误</string>
+    <string name="exec_ctrl_c_error">使用了Ctrl+C</string>
+    <string name="exec_other_error">其他错误</string>
+    <string name="server_magisk_runner_magisk_server">应用在后台时，server可能会被Magisk杀死，推荐使用Runner或Magisk模块启动server</string>
+    <string name="allow_once">本次允许</string>
+    <string name="cancel">取消</string>
+    <string name="no_more_prompts">不再提示</string>
 </resources>

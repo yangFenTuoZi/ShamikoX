@@ -1,0 +1,17 @@
+<resources>
+    <string name="filter_pref">Filter attrs</string>
+    <string name="search">Search</string>
+    <string name="orderBy">Order</string>
+    <string name="name">By name</string>
+    <string name="installDate">By upgrade date</string>
+    <string name="showSystemApp">Show system app</string>
+    <string name="choose">Choose</string>
+    <string name="detail">Detail</string>
+    <string name="copy_successful">Replicated successfully</string>
+    <string name="press_again_to_exit">Press again to exit</string>
+    <string name="choose_mode">Choose mode</string>
+    <string name="apps_found">%d apps found</string>
+    <string name="authorize">Go to authorize</string>
+    <string name="can_not_get_package_list">Unable to get the list of apps, please check the permissions</string>
+    <string name="authorize_by_hand">Please authorize by hand</string>
+</resources>

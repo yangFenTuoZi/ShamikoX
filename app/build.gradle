@@ -55,4 +55,7 @@ dependencies {
     implementation libs.activity
     implementation libs.constraintlayout
     implementation libs.coordinatorlayout
+    implementation libs.swiperefreshlayout
+
+    implementation project(':packageViewer')
 }

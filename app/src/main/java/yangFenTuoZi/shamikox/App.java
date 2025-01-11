@@ -1,7 +1,9 @@
 package yangFenTuoZi.shamikox;
 
 import android.app.Application;
-import android.util.Log;
+
+import com.google.android.material.color.DynamicColors;
+import com.mai.packageviewer.GlobalContext;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -19,70 +21,63 @@ public class App extends Application {
     public MainActivity main;
     private Thread thread;
 
+    public static void sleep(long millis) {
+        try {
+            Thread.sleep(millis);
+        } catch (InterruptedException ignored) {
+        }
+    }
+
     public boolean tryConnectServer() {
         try {
             server = new Socket("localhost", 11451);
             server.setKeepAlive(true);
             output = new BufferedWriter(new OutputStreamWriter(server.getOutputStream()));
             input = new BufferedReader(new InputStreamReader(server.getInputStream()));
-            return serverIsClosed = true;
-        } catch (IOException ignored) {
             return serverIsClosed = false;
-        }
-    }
-
-    private void serverIsClosed() {
-        if (server != null) {
-            try {
-                output.write("0\n");
-                output.flush();
-                serverIsClosed = false;
-            } catch (IOException e) {
-                serverIsClosed = true;
-            }
-        }
-        if (main != null && main.isForeground) {
-            if (serverIsClosed) {
-                main.runOnUiThread(() -> {
-                    main.switchWhitelist.setChecked(false);
-                    main.switchWhitelist.setEnabled(false);
-                });
-            } else {
-                main.runOnUiThread(() -> main.switchWhitelist.setEnabled(true));
-            }
+        } catch (IOException ignored) {
+            return serverIsClosed = true;
         }
     }
 
     @Override
     public void onCreate() {
         super.onCreate();
+        GlobalContext.context = this;
+        DynamicColors.applyToActivitiesIfAvailable(this);
         thread = new Thread(() -> {
             while (!thread.isInterrupted()) {
-                serverIsClosed();
                 if (serverIsClosed) {
                     tryConnectServer();
                 }
-                if (serverIsClosed) {
-                    new Thread(() -> {
-                        try {
-                            output.write("-4\n");
-                            output.flush();
-                            String result = input.readLine();
-                            if (result == null) isWhitelist = false;
-                            else isWhitelist = result.equals("1");
-                        } catch (Exception e) {
-                            serverIsClosed = true;
-                            isWhitelist = false;
-                        }
-                        if (main != null && main.isForeground) {
-                            main.runOnUiThread(() -> main.switchWhitelist.setChecked(isWhitelist));
-                        }
-                    }).start();
+                if (!serverIsClosed) {
+                    try {
+                        output.write("-4\n");
+                        output.flush();
+                        String result = input.readLine();
+                        if (result == null) isWhitelist = false;
+                        else isWhitelist = result.equals("1");
+                    } catch (Exception e) {
+                        serverIsClosed = true;
+                        isWhitelist = false;
+                    }
                 }
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException ignored) {
+
+                if (main != null && main.isForeground) {
+                    if (serverIsClosed) {
+                        main.runOnUiThread(() -> {
+                            main.switchWhitelist.setChecked(false);
+                            main.switchWhitelist.setEnabled(false);
+                        });
+                    } else {
+                        main.runOnUiThread(() -> {
+                            main.switchWhitelist.setEnabled(true);
+                            main.switchWhitelist.setChecked(isWhitelist);
+                        });
+                    }
                 }
+
+                sleep(1000);
             }
         });
         thread.start();

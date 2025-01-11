@@ -1,115 +1,135 @@
 package yangFenTuoZi.shamikox;
 
+import android.annotation.SuppressLint;
+import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.view.MenuProvider;
 
 import com.google.android.material.color.DynamicColors;
-import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.materialswitch.MaterialSwitch;
-
-import java.io.BufferedWriter;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.net.Socket;
+import com.mai.packageviewer.activity.PackageViewerActivity;
+import com.mai.packageviewer.setting.MainSettings;
 
 import yangFenTuoZi.shamikox.databinding.ActivityMainBinding;
 import yangFenTuoZi.shamikox.databinding.DialogRequestRootBinding;
+import yangFenTuoZi.shamikox.dialog.BaseDialogBuilder;
+import yangFenTuoZi.shamikox.dialog.StartServerDialogBuilder;
 
 public class MainActivity extends AppCompatActivity {
     private ActivityMainBinding binding;
     private App mApp;
     public MaterialSwitch switchWhitelist;
     public boolean isForeground = false;
+    public boolean isDialogShow = false;
 
+    private DialogRequestRootBinding dialogBinding;
+    private final ActivityResultLauncher<Intent> launcherActivity = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
+        if (result.getResultCode() == RESULT_OK) {
+            if (result.getData() != null && dialogBinding != null) {
+                dialogBinding.uid.setText(String.valueOf(result.getData().getIntExtra("uid", -1)));
+            }
+        }
+    });
+
+    @SuppressLint("NonConstantResourceId")
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         DynamicColors.applyToActivityIfAvailable(this);
-        ActivityMainBinding binding = ActivityMainBinding.inflate(getLayoutInflater());
+        binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
-        setupToolbar(binding.toolbar, getString(R.string.app_name), -1);
+        setupToolbar(binding.toolbar, getString(R.string.app_name), R.menu.menu_main);
         mApp = (App) getApplication();
 
         switchWhitelist = binding.switchWhitelist;
-        switchWhitelist.setOnClickListener(v -> {
-            new Thread(() -> {
-                boolean isChecked = switchWhitelist.isChecked();
-                mApp.changeWhitelist(isChecked);
-//                if (!result) runOnUiThread(() -> switchWhitelist.setChecked(!isChecked));
-            }).start();
+        switchWhitelist.setOnClickListener(v -> new Thread(() -> {
+            boolean isChecked = switchWhitelist.isChecked();
+            mApp.changeWhitelist(isChecked);
+        }).start());
+
+        binding.toolbar.setOnMenuItemClickListener(item -> {
+            int itemId = item.getItemId();
+            if (itemId == R.id.start_server) {
+                if (mApp.serverIsClosed) {
+                    if (MainSettings.INSTANCE.getBool("do_not_start_server_in_app", true)) {
+                        try {
+                            new BaseDialogBuilder(this)
+                                    .setTitle(R.string.start_server)
+                                    .setMessage(R.string.server_magisk_runner_magisk_server)
+                                    .setPositiveButton(R.string.allow_once, (dialog, which) -> {
+                                        dialog.dismiss();
+                                        isDialogShow = false;
+                                        try {
+                                            new StartServerDialogBuilder(this).show();
+                                        } catch (BaseDialogBuilder.DialogShowException ignored) {
+                                        }
+                                    })
+                                    .setNegativeButton(R.string.cancel, null)
+                                    .setNeutralButton(R.string.no_more_prompts, (dialogInterface, i) -> {
+                                        dialogInterface.dismiss();
+                                        isDialogShow = false;
+                                        MainSettings.INSTANCE.setBool("do_not_start_server_in_app", false);
+                                        try {
+                                            new StartServerDialogBuilder(this).show();
+                                        } catch (BaseDialogBuilder.DialogShowException ignored) {
+                                        }
+                                    })
+                                    .show();
+                        } catch (BaseDialogBuilder.DialogShowException ignored) {
+                        }
+                    } else {
+                        try {
+                            new StartServerDialogBuilder(this).show();
+                        } catch (BaseDialogBuilder.DialogShowException ignored) {
+                        }
+                    }
+                }
+            } else if (itemId == R.id.stop_server) {
+                if (!mApp.serverIsClosed) {
+                    try {
+                        new BaseDialogBuilder(this)
+                                .setTitle(R.string.stop_server)
+                                .setNegativeButton("Yes", (dialog, which) -> new Thread(() -> mApp.stopServer()).start())
+                                .show();
+                    } catch (BaseDialogBuilder.DialogShowException ignored) {
+                    }
+                }
+            }
+            return false;
         });
 
         binding.requestRoot.setOnClickListener(v -> {
-            DialogRequestRootBinding dialogBinding = DialogRequestRootBinding.inflate(getLayoutInflater());
-            new MaterialAlertDialogBuilder(this)
-                    .setTitle(R.string.request_root)
-                    .setView(dialogBinding.getRoot())
-                    .setNegativeButton(R.string.request_root, (dialog, which) -> new Thread(() -> mApp.requestRoot(Integer.parseInt(String.valueOf(dialogBinding.uid.getText())))).start())
-                    .show();
-        });
-
-        binding.startServer.setOnClickListener(v -> {
-            if (mApp.serverIsClosed)
-                startServer();
-        });
-        binding.stopServer.setOnClickListener(v -> {
-            if (mApp.serverIsClosed) return;
-            new MaterialAlertDialogBuilder(this)
-                    .setTitle(R.string.stop_server)
-                    .setNegativeButton("Yes", (dialog, which) -> new Thread(() -> mApp.stopServer()).start())
-                    .show();
-        });
-        mApp.main = this;
-    }
-
-    public void startServer() {
-        AlertDialog alertDialog = new MaterialAlertDialogBuilder(this)
-                .setTitle(R.string.start_server)
-                .setMessage("Waiting..")
-                .setCancelable(false)
-                .show();
-        new Thread(() -> {
+            dialogBinding = DialogRequestRootBinding.inflate(getLayoutInflater());
+            dialogBinding.chooseApp.setOnClickListener(v1 -> launcherActivity.launch(new Intent(this, PackageViewerActivity.class).putExtra("choose", true)));
             try {
-                String serverFilePath = getApplicationInfo().nativeLibraryDir + "/libserver.so";
-                Process process = Runtime.getRuntime().exec("/system/bin/sh");
-                BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(process.getOutputStream()));
-                writer.write("""
-                        su
-                        if [ ! $? -eq 0 ]; then
-                            exit 1
-                        fi
-                        """);
-                writer.flush();
-                writer.write(String.format("nohup %s 2>&1 >/dev/null &\nexit\n", serverFilePath));
-                writer.flush();
-                writer.close();
-                alertDialog.setMessage("Exit code: " + process.waitFor());
-                alertDialog.setCancelable(true);
-            } catch (Throwable e) {
-                runOnUiThread(() -> {
-                    alertDialog.setMessage(Log.getStackTraceString(e));
-                    alertDialog.setCancelable(true);
-                });
+                new BaseDialogBuilder(this)
+                        .setTitle(R.string.request_root)
+                        .setView(dialogBinding.getRoot())
+                        .setNegativeButton(R.string.request_root, (dialog, which) -> new Thread(() -> mApp.requestRoot(Integer.parseInt(String.valueOf(dialogBinding.uid.getText())))).start())
+                        .setOnDismissListener(dialog -> dialogBinding = null)
+                        .show();
+            } catch (BaseDialogBuilder.DialogShowException ignored) {
             }
-        }).start();
+        });
+
+        mApp.main = this;
+
     }
 
     @Override
     protected void onStart() {
         super.onStart();
         isForeground = true;
-        new Thread(() -> {
-            runOnUiThread(() -> {
-                switchWhitelist.setChecked(mApp.isWhitelist);
-                if (mApp.serverIsClosed) switchWhitelist.setEnabled(false);
-            });
-        }).start();
+        new Thread(() -> runOnUiThread(() -> {
+            switchWhitelist.setChecked(mApp.isWhitelist);
+            if (mApp.serverIsClosed) switchWhitelist.setEnabled(false);
+        })).start();
     }
 
     @Override

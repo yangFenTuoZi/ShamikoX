@@ -5,4 +5,18 @@
     <string name="blacklist_mode">Blacklist Mode</string>
     <string name="stop_server">Stop Server</string>
     <string name="start_server">Start Server</string>
+    <string name="loading">Loading…</string>
+    <string name="end">End</string>
+    <string name="exec_running">Running…</string>
+    <string name="exec_finish">Finish</string>
+    <string name="exec_return">Return value: %d(%s)</string>
+    <string name="exec_normal">Normal</string>
+    <string name="exec_command_not_found">Command not found</string>
+    <string name="exec_segmentation_error">Segmentation error</string>
+    <string name="exec_ctrl_c_error">Ctrl+C was used</string>
+    <string name="exec_other_error">Other error</string>
+    <string name="server_magisk_runner_magisk_server">When the application is in the background, the server may be killed by Magisk, so it is recommended to use the Runner or Magisk module to start the server</string>
+    <string name="allow_once">Allowed once</string>
+    <string name="cancel">Cancel</string>
+    <string name="no_more_prompts">No more prompts</string>
 </resources>

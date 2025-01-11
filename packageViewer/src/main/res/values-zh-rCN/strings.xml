@@ -1,0 +1,17 @@
+<resources>
+    <string name="filter_pref">筛选属性</string>
+    <string name="search">搜索</string>
+    <string name="orderBy">排序</string>
+    <string name="name">按名称</string>
+    <string name="installDate">按更新时间</string>
+    <string name="showSystemApp">显示系统APP</string>
+    <string name="choose">选择</string>
+    <string name="detail">详情</string>
+    <string name="copy_successful">复制成功</string>
+    <string name="press_again_to_exit">再按一次退出</string>
+    <string name="choose_mode">选择模式</string>
+    <string name="apps_found">共找到%d个应用</string>
+    <string name="authorize">去授权</string>
+    <string name="can_not_get_package_list">无法获取应用列表，请检查权限</string>
+    <string name="authorize_by_hand">请手动开启获取应用列表权限</string>
+</resources>

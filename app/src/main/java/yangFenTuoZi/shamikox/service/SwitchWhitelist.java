@@ -12,9 +12,7 @@ public class SwitchWhitelist extends TileService {
 
     private boolean waitForIsWhitelist() {
         AtomicInteger result_ = new AtomicInteger(-1);
-        new Thread(() -> {
-            result_.set(mApp.isWhitelist ? 1 : 0);
-        }).start();
+        new Thread(() -> result_.set(mApp.isWhitelist ? 1 : 0)).start();
         while (result_.get() == -1) ;
         return result_.get() == 1;
     }
