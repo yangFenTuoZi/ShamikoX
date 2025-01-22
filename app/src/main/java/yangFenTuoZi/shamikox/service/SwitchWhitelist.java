@@ -1,7 +1,9 @@
 package yangFenTuoZi.shamikox.service;
 
+import android.os.RemoteException;
 import android.service.quicksettings.Tile;
 import android.service.quicksettings.TileService;
+import android.util.Log;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -11,10 +13,13 @@ public class SwitchWhitelist extends TileService {
     private App mApp;
 
     private boolean waitForIsWhitelist() {
-        AtomicInteger result_ = new AtomicInteger(-1);
-        new Thread(() -> result_.set(mApp.isWhitelist ? 1 : 0)).start();
-        while (result_.get() == -1) ;
-        return result_.get() == 1;
+        if (!mApp.isServerRunning) return false;
+        try {
+            return mApp.iService.isWhitelist();
+        } catch (RemoteException e) {
+            Log.e(getClass().getSimpleName(), Log.getStackTraceString(e));
+            return false;
+        }
     }
 
     @Override
@@ -47,7 +52,12 @@ public class SwitchWhitelist extends TileService {
         if (state == Tile.STATE_UNAVAILABLE) return;
 
         new Thread(() -> {
-            getQsTile().setState(mApp.changeWhitelist(state == Tile.STATE_INACTIVE) ? Tile.STATE_ACTIVE : Tile.STATE_INACTIVE);
+            if (!mApp.isServerRunning) return;
+            try {
+                getQsTile().setState(mApp.iService.change(state == Tile.STATE_INACTIVE) ? Tile.STATE_ACTIVE : Tile.STATE_INACTIVE);
+            } catch (RemoteException e) {
+                Log.e(getClass().getSimpleName(), Log.getStackTraceString(e));
+            }
             getQsTile().updateTile();
         }).start();
         super.onClick();

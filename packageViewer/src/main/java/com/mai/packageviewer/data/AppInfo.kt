@@ -2,12 +2,12 @@ package com.mai.packageviewer.data
 
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageInfo
+import android.content.pm.PackageManager
 import android.graphics.drawable.Drawable
 import android.os.Build
-import com.mai.packageviewer.GlobalContext
 
 
-class AppInfo(packageInfo: PackageInfo) {
+class AppInfo(packageInfo: PackageInfo, packageManager: PackageManager) {
 
     private val applicationInfo: ApplicationInfo = packageInfo.applicationInfo!!
 
@@ -59,7 +59,7 @@ class AppInfo(packageInfo: PackageInfo) {
     /**
      * AppName
      */
-    var label = applicationInfo.loadLabel(GlobalContext.context.packageManager).toString()
+    var label = applicationInfo.loadLabel(packageManager).toString()
 
     /**
      * uid
@@ -69,5 +69,5 @@ class AppInfo(packageInfo: PackageInfo) {
     /**
      * icon
      */
-    var iconDrawable: Drawable? = applicationInfo.loadIcon(GlobalContext.context.packageManager)
+    var iconDrawable: Drawable? = applicationInfo.loadIcon(packageManager)
 }

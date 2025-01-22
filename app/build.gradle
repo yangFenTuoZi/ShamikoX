@@ -8,17 +8,10 @@ android {
 
     defaultConfig {
         applicationId 'yangFenTuoZi.shamikox'
-        minSdk 26
+        minSdk 27
         targetSdk 35
-        versionCode 1
-        versionName '1.0'
-
-        externalNativeBuild {
-            cmake {
-                abiFilters 'armeabi-v7a', 'arm64-v8a', 'armeabi-v7a', 'x86_64', 'x86'
-                cppFlags += ""
-            }
-        }
+        versionCode 2
+        versionName '1.1'
     }
 
     buildTypes {
@@ -35,15 +28,8 @@ android {
     buildFeatures {
         viewBinding true
         buildConfig true
+        aidl true
     }
-
-    externalNativeBuild {
-        cmake {
-            path file('src/main/cpp/CMakeLists.txt')
-            version '3.22.1'
-        }
-    }
-    packaging.jniLibs.useLegacyPackaging true
 }
 
 dependencies {
@@ -58,4 +44,5 @@ dependencies {
     implementation libs.swiperefreshlayout
 
     implementation project(':packageViewer')
+    compileOnly project(':hiddenapi:stubs')
 }

@@ -1,6 +1,7 @@
 package com.mai.packageviewer.util
 
 import android.content.pm.PackageInfo
+import android.content.pm.PackageManager
 import com.mai.packageviewer.data.AppInfo
 import com.mai.packageviewer.data.BaseKVObject
 import java.text.SimpleDateFormat
@@ -24,7 +25,7 @@ object AppInfoHelper {
      * @param callback 回调
      * @param threads 线程数，默认为4
      */
-    fun handle(list: MutableList<PackageInfo>, callback: AppInfoCallback, threads: Int = 4) {
+    fun handle(list: MutableList<PackageInfo>, callback: AppInfoCallback, threads: Int = 4, packageManager: PackageManager) {
         isRunning = true
         val ret = Vector<MutableList<AppInfo>>(threads)
         // 根据threads分割数据
@@ -33,7 +34,7 @@ object AppInfoHelper {
             val thread = Thread {
                 val result = ArrayList<AppInfo>(averageAssign[i].size)
                 averageAssign[i].forEach {
-                    val appInfo = AppInfo(it)
+                    val appInfo = AppInfo(it, packageManager)
                     result.add(appInfo)
                 }
                 ret.add(result)

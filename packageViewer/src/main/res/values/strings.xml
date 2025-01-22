@@ -14,4 +14,6 @@
     <string name="authorize">Go to authorize</string>
     <string name="can_not_get_package_list">Unable to get the list of apps, please check the permissions</string>
     <string name="authorize_by_hand">Please authorize by hand</string>
+    <string name="loading">Loading…</string>
+    <string name="input_app_name_or_package_name">Enter an app name or package name</string>
 </resources>

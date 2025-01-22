@@ -59,10 +59,7 @@ void app_watch_thread() {
 }
 
 int main(int argc, char *argv[]) {
-    bool server = argc > 1 && strcmp(argv[1], "server") == 0;
-    std::string s_title;
-    if (server) s_title = "shamikox_server";
-    else s_title = "shamikox_server_daemon";
+    std::string s_title = "shamikox_server";
     size_t i_size = s_title.size();
     memcpy(argv[0], s_title.data(), i_size);
     argv[0][i_size] = '\0';
@@ -79,39 +76,11 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
 
-    if (server) {
-        main_server();
-        return 0;
-    }
-
-    std::string abi;
-    std::string abiProperty = exec("getprop ro.product.cpu.abi").message;
-    if (abiProperty == "arm64-v8a\n") {
-        abi = "arm64";
-    } else if (abiProperty == "armeabi-v7a\n") {
-        abi = "arm";
-    } else if (abiProperty == "x86\n") {
-        abi = "x86";
-    } else if (abiProperty == "x86_64\n") {
-        abi = "x86_64";
-    } else {
-        std::cerr << "不支持的ABI: " << abiProperty << std::endl;
-        exit(255);
-    }
-
-    int exit_value = EXIT_RESTART_SERVER;
-    while (exit_value == EXIT_RESTART_SERVER) {
-        std::string command;
-        command.append("$(dirname $(pm path yangFenTuoZi.shamikox | sed 's/^package://'))/lib/");
-        command.append(abi);
-        command.append("/libserver.so server");
-        exit_value = WEXITSTATUS(system(command.data()));
-    }
-    exit(exit_value);
+    main_server();
     return 0;
 }
 
-[[noreturn]] void main_server() {
+void main_server() {
     int server_socket, client_socket;
     struct sockaddr_in address{};
     int opt = 1;
@@ -309,58 +278,3 @@ void handle_client(int client_socket) {
     }
 }
 
-exec_result exec(const char *_Nonnull command) {
-    exec_result result;
-    FILE *fp = popen(
-            command,
-            "r+");
-    if (fp == nullptr) {
-        perror("popen失败");
-    }
-    char buffer[1024];
-    while (fgets(buffer, sizeof(buffer), fp) != nullptr) {
-        result.message.append(buffer);
-    }
-    result.exit = WEXITSTATUS(pclose(fp));
-    return result;
-}
-
-std::string getFormattedTime() {
-    auto now = std::chrono::system_clock::now();
-    std::time_t currentTime = std::chrono::system_clock::to_time_t(now);
-    std::tm *timeInfo = std::localtime(&currentTime);
-    std::stringstream ss;
-    ss << std::put_time(timeInfo, "%Y-%m-%d %H:%M:%S");
-    return ss.str();
-}
-
-
-void info(const char *fmt, ...) {
-    va_list args;
-    va_start(args, fmt);
-    std::cout << getFormattedTime() << " " << LOG_TAG << " I ";
-    vprintf(fmt, args);
-    std::cout << std::endl;
-    __android_log_print(ANDROID_LOG_INFO, LOG_TAG, fmt, args);
-    va_end(args);
-}
-
-void warn(const char *fmt, ...) {
-    va_list args;
-    va_start(args, fmt);
-    std::cout << getFormattedTime() << " " << LOG_TAG << " W ";
-    vprintf(fmt, args);
-    std::cout << std::endl;
-    __android_log_print(ANDROID_LOG_WARN, LOG_TAG, fmt, args);
-    va_end(args);
-}
-
-void error(const char *fmt, ...) {
-    va_list args;
-    va_start(args, fmt);
-    std::cout << getFormattedTime() << " " << LOG_TAG << " E ";
-    vprintf(fmt, args);
-    std::cout << std::endl;
-    __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, fmt, args);
-    va_end(args);
-}

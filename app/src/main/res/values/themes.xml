@@ -4,7 +4,7 @@
     <style name="Base.AppTheme.Light" parent="Theme.Material3.DynamicColors.Light">
         <item name="android:windowLightStatusBar">true</item>
 
-        <item name="android:statusBarColor">?android:colorBackground</item>
+        <!--        <item name="android:statusBarColor">?android:colorBackground</item>-->
         <item name="android:windowActionBar">false</item>
         <item name="android:windowNoTitle">true</item>
         <item name="windowActionBar">false</item>
@@ -16,9 +16,6 @@
         <item name="android:colorAccent">?colorPrimary</item>
         <!-- Preference switch -->
         <item name="android:colorControlActivated">?colorPrimary</item>
-        <item name="android:navigationBarColor">
-            @android:color/transparent
-        </item>
     </style>
 
     <style name="Theme.Light" parent="Base.AppTheme.Light" />
@@ -35,9 +32,6 @@
         <item name="android:colorAccent">?colorPrimary</item>
         <!-- Preference switch -->
         <item name="android:colorControlActivated">?colorPrimary</item>
-        <item name="android:navigationBarColor">
-            @android:color/transparent
-        </item>
     </style>
 
     <style name="Theme" parent="Base.AppTheme" />

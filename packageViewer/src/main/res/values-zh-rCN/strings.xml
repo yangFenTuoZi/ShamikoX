@@ -14,4 +14,6 @@
     <string name="authorize">去授权</string>
     <string name="can_not_get_package_list">无法获取应用列表，请检查权限</string>
     <string name="authorize_by_hand">请手动开启获取应用列表权限</string>
+    <string name="loading">加载中…</string>
+    <string name="input_app_name_or_package_name">输入应用名或包名</string>
 </resources>

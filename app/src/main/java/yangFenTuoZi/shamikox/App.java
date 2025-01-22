@@ -1,143 +1,115 @@
 package yangFenTuoZi.shamikox;
 
 import android.app.Application;
+import android.os.Handler;
+import android.os.IBinder;
+import android.os.RemoteException;
+import android.util.Log;
+
+import androidx.annotation.NonNull;
 
 import com.google.android.material.color.DynamicColors;
-import com.mai.packageviewer.GlobalContext;
+import com.mai.packageviewer.setting.MainSettings;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
+import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
+import java.io.OutputStream;
 import java.net.Socket;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
+
+import yangFenTuoZi.shamikox.receiver.OnServerChangeListener;
+import yangFenTuoZi.shamikox.server.IService;
+import yangFenTuoZi.shamikox.server.Server;
 
 public class App extends Application {
-    private Socket server;
-    private BufferedWriter output;
-    private BufferedReader input;
-    public boolean serverIsClosed = true;
-    public boolean isWhitelist = false;
+    public IService iService;
+    public boolean isServerRunning = false;
     public MainActivity main;
-    private Thread thread;
+    public File sendBinderFile;
+    private final List<OnServerChangeListener> mListeners = new LinkedList<>();
+    private Timer timer;
+    private Handler mHandler;
+    private Thread mUiThread;
 
-    public static void sleep(long millis) {
-        try {
-            Thread.sleep(millis);
-        } catch (InterruptedException ignored) {
+    public void onReceive(IBinder binder) {
+        iService = binder == null ? null : IService.Stub.asInterface(binder);
+
+        boolean server = pingServer();
+
+        if (timer != null)
+            timer.cancel();
+        if (server) {
+            timer = new Timer();
+            timer.schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    if (!pingServer()) {
+                        onReceive(null);
+                    }
+                }
+            }, 0L, 500L);
+            if (sendBinderFile.exists())
+                sendBinderFile.delete();
+            for (OnServerChangeListener listener : mListeners)
+                new Thread(() -> listener.serverRun(iService)).start();
+
+        } else {
+            if (!sendBinderFile.exists()) {
+                try {
+                    sendBinderFile.createNewFile();
+                } catch (IOException e) {
+                    Log.e(getClass().getSimpleName(), Log.getStackTraceString(e));
+                }
+            }
+            for (OnServerChangeListener listener : mListeners)
+                new Thread(listener::serverStop).start();
         }
     }
 
-    public boolean tryConnectServer() {
-        try {
-            server = new Socket("localhost", 11451);
-            server.setKeepAlive(true);
-            output = new BufferedWriter(new OutputStreamWriter(server.getOutputStream()));
-            input = new BufferedReader(new InputStreamReader(server.getInputStream()));
-            return serverIsClosed = false;
-        } catch (IOException ignored) {
-            return serverIsClosed = true;
-        }
+    public void addOnServiceConnectListener(@NonNull OnServerChangeListener listener) {
+        mListeners.add(listener);
+    }
+
+    public void removeOnServiceConnectListener(@NonNull OnServerChangeListener listener) {
+        mListeners.remove(listener);
     }
 
     @Override
     public void onCreate() {
         super.onCreate();
-        GlobalContext.context = this;
+        mHandler = new Handler();
+        mUiThread = Thread.currentThread();
+        sendBinderFile = new File(getCacheDir(), Server.SEND_BINDER_FILE);
         DynamicColors.applyToActivitiesIfAvailable(this);
-        thread = new Thread(() -> {
-            while (!thread.isInterrupted()) {
-                if (serverIsClosed) {
-                    tryConnectServer();
-                }
-                if (!serverIsClosed) {
-                    try {
-                        output.write("-4\n");
-                        output.flush();
-                        String result = input.readLine();
-                        if (result == null) isWhitelist = false;
-                        else isWhitelist = result.equals("1");
-                    } catch (Exception e) {
-                        serverIsClosed = true;
-                        isWhitelist = false;
-                    }
-                }
+        MainSettings.Companion.setINSTANCE(new MainSettings(this));
+        onReceive(null);
+    }
 
-                if (main != null && main.isForeground) {
-                    if (serverIsClosed) {
-                        main.runOnUiThread(() -> {
-                            main.switchWhitelist.setChecked(false);
-                            main.switchWhitelist.setEnabled(false);
-                        });
-                    } else {
-                        main.runOnUiThread(() -> {
-                            main.switchWhitelist.setEnabled(true);
-                            main.switchWhitelist.setChecked(isWhitelist);
-                        });
-                    }
-                }
-
-                sleep(1000);
-            }
-        });
-        thread.start();
+    public boolean pingServer() {
+        try {
+            return isServerRunning = (iService != null && iService.asBinder().pingBinder() && iService.asBinder().isBinderAlive() && iService.testConnect() == 114514);
+        } catch (RemoteException e) {
+            return isServerRunning = false;
+        }
     }
 
     @Override
     public void onTerminate() {
         super.onTerminate();
-        thread.interrupt();
-        if (!serverIsClosed) {
-            try {
-                server.close();
-                output.close();
-                input.close();
-            } catch (Exception ignored) {
-                serverIsClosed = true;
-                isWhitelist = false;
-            }
-        }
+        if (timer != null)
+            timer.cancel();
+        if (sendBinderFile.exists())
+            sendBinderFile.delete();
     }
 
-    public boolean changeWhitelist(boolean whitelist) {
-        try {
-            if (serverIsClosed)
-                if (!tryConnectServer()) throw new IOException();
-            output.write((whitelist ? -2 : -3) + "\n");
-            output.flush();
-            String string = input.readLine();
-            isWhitelist = string.equals("1");
-        } catch (Exception e) {
-            serverIsClosed = true;
-            isWhitelist = false;
+    public final void runOnUiThread(Runnable action) {
+        if (Thread.currentThread() != mUiThread) {
+            mHandler.post(action);
+        } else {
+            action.run();
         }
-        if (main != null && main.isForeground) {
-            new Thread(() -> main.runOnUiThread(() -> main.switchWhitelist.setChecked(isWhitelist))).start();
-        }
-        return isWhitelist;
-    }
-
-    public void requestRoot(int uid) {
-        try {
-            if (serverIsClosed)
-                if (!tryConnectServer()) throw new IOException();
-            output.write(uid + "\n");
-            output.flush();
-        } catch (Exception e) {
-            serverIsClosed = true;
-            isWhitelist = false;
-        }
-    }
-
-    public void stopServer() {
-        try {
-            if (serverIsClosed)
-                if (!tryConnectServer()) throw new IOException();
-            output.write("-1\n");
-            output.flush();
-        } catch (Exception ignored) {
-        }
-        isWhitelist = false;
-        serverIsClosed = true;
     }
 }

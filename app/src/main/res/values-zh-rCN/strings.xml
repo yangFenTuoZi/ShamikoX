@@ -1,6 +1,6 @@
 <resources>
     <string name="app_name">ShamikoX</string>
-    <string name="request_root">请求Root</string>
+    <string name="authorize_root">授权Root</string>
     <string name="whitelist_mode">白名单模式</string>
     <string name="blacklist_mode">黑名单模式</string>
     <string name="stop_server">停止服务</string>
@@ -19,4 +19,10 @@
     <string name="allow_once">本次允许</string>
     <string name="cancel">取消</string>
     <string name="no_more_prompts">不再提示</string>
+    <string name="home">主页</string>
+    <string name="settings">设置</string>
+    <string name="superuser">超级用户</string>
+    <string name="notifications">通知</string>
+    <string name="logs">日志</string>
+    <string name="revoke">撤销</string>
 </resources>

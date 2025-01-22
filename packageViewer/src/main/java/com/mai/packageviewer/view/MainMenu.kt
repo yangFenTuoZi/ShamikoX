@@ -49,12 +49,12 @@ class MainMenu(val menu: Menu, val activity: Activity) {
                 }
 
                 R.id.order_by_name -> {
-                    it.isChecked = MainSettings.INSTANCE.getBool(MainSettings.ORDER_BY_NAME, false)
+                    it.isChecked = MainSettings.INSTANCE!!.getBool(MainSettings.ORDER_BY_NAME, false)
                     orderByName = it.isChecked
                 }
 
                 R.id.order_by_date -> {
-                    if (!MainSettings.INSTANCE.getBool(MainSettings.ORDER_BY_NAME, false)) {
+                    if (!MainSettings.INSTANCE!!.getBool(MainSettings.ORDER_BY_NAME, false)) {
                         it.isChecked = true
                         orderByName = !it.isChecked
                     }
@@ -62,13 +62,14 @@ class MainMenu(val menu: Menu, val activity: Activity) {
 
                 R.id.show_system_app -> {
                     it.isChecked =
-                        MainSettings.INSTANCE.getBool(MainSettings.SHOW_SYSTEM_APP, false)
+                        MainSettings.INSTANCE!!.getBool(MainSettings.SHOW_SYSTEM_APP, false)
                     showSystemApp = it.isChecked
                 }
 
                 R.id.app_bar_search -> {
                     val searchView = it.actionView as SearchView
-                    searchView.queryHint = "输入应用名或包名"
+                    searchView.queryHint =
+                        activity.getString(R.string.input_app_name_or_package_name)
                     searchViewSearchButton =
                         searchView.findViewById(androidx.appcompat.R.id.search_button)
                     searchViewCloseButton =
@@ -107,7 +108,7 @@ class MainMenu(val menu: Menu, val activity: Activity) {
         when (item.itemId) {
             R.id.order_by_name -> {
                 item.isChecked = true
-                MainSettings.INSTANCE.setBool(MainSettings.ORDER_BY_NAME, true)
+                MainSettings.INSTANCE!!.setBool(MainSettings.ORDER_BY_NAME, true)
 
                 orderByName = true
                 mainMenuListener?.onOrderChanged(true)
@@ -115,7 +116,7 @@ class MainMenu(val menu: Menu, val activity: Activity) {
 
             R.id.order_by_date -> {
                 item.isChecked = true
-                MainSettings.INSTANCE.setBool(MainSettings.ORDER_BY_NAME, false)
+                MainSettings.INSTANCE!!.setBool(MainSettings.ORDER_BY_NAME, false)
 
                 orderByName = false
                 mainMenuListener?.onOrderChanged(false)
@@ -124,7 +125,7 @@ class MainMenu(val menu: Menu, val activity: Activity) {
             R.id.show_system_app -> {
                 val b = !item.isChecked
                 item.isChecked = b
-                MainSettings.INSTANCE.setBool(MainSettings.SHOW_SYSTEM_APP, b)
+                MainSettings.INSTANCE!!.setBool(MainSettings.SHOW_SYSTEM_APP, b)
 
                 showSystemApp = b
                 mainMenuListener?.onIncludeSystemApp(b)

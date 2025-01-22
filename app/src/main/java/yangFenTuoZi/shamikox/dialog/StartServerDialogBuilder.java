@@ -14,6 +14,8 @@ import java.io.OutputStream;
 import yangFenTuoZi.shamikox.App;
 import yangFenTuoZi.shamikox.MainActivity;
 import yangFenTuoZi.shamikox.R;
+import yangFenTuoZi.shamikox.receiver.OnServerChangeListener;
+import yangFenTuoZi.shamikox.server.IService;
 
 public class StartServerDialogBuilder extends BaseDialogBuilder {
 
@@ -21,23 +23,26 @@ public class StartServerDialogBuilder extends BaseDialogBuilder {
     TextView t1;
     TextView t2;
     MainActivity mContext;
-    Thread h1, serverListener = new Thread(() -> {
-        App mApp = (App) mContext.getApplication();
-        while (!br) {
-            if (!mApp.serverIsClosed) {
-                runOnUiThread(() -> {
-                    getAlertDialog().setCancelable(true);
-                    getAlertDialog().setTitle(R.string.exec_finish);
-                    Toast.makeText(mContext, "Server starts successfully and the window will close after 5 seconds.", Toast.LENGTH_LONG).show();
-                });
-                try {
-                    Thread.sleep(5000);
-                } catch (InterruptedException ignored) {
-                }
-                runOnUiThread(getAlertDialog()::cancel);
+    Thread h1;
+    OnServerChangeListener listener = new OnServerChangeListener() {
+        @Override
+        public void serverRun(IService iService) {
+            runOnUiThread(() -> {
+                getAlertDialog().setCancelable(true);
+                getAlertDialog().setTitle(R.string.exec_finish);
+                Toast.makeText(mContext, "Server starts successfully and the window will close after 5 seconds.", Toast.LENGTH_LONG).show();
+            });
+            try {
+                Thread.sleep(5000);
+            } catch (InterruptedException ignored) {
             }
+            runOnUiThread(getAlertDialog()::cancel);
         }
-    });
+
+        @Override
+        public void serverStop() {
+        }
+    };
 
     public StartServerDialogBuilder(@NonNull MainActivity context) throws DialogShowException {
         super(context);
@@ -56,7 +61,7 @@ public class StartServerDialogBuilder extends BaseDialogBuilder {
             t1.setVisibility(View.GONE);
         }
         t2 = getAlertDialog().findViewById(R.id.exec_msg);
-        serverListener.start();
+        mContext.mApp.addOnServiceConnectListener(listener);
         h1 = new Thread(() -> {
             br = false;
             int exitValue;
@@ -64,19 +69,17 @@ public class StartServerDialogBuilder extends BaseDialogBuilder {
             try {
                 Process p = Runtime.getRuntime().exec("su");
                 OutputStream out = p.getOutputStream();
-                out.write(("\"" + mContext.getApplicationInfo().nativeLibraryDir + "/libserver.so\" &\nsleep 3s\nexit\n").getBytes());
+                out.write(("sh \"" + mContext.getExternalFilesDir("") + "/server_starter.sh\"\n").getBytes());
                 out.flush();
                 out.close();
                 try {
-                    BufferedReader br = new BufferedReader(new InputStreamReader(p.getInputStream()));
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream()));
                     String inline;
-                    while ((inline = br.readLine()) != null && !StartServerDialogBuilder.this.br) {
-                        if (inline.contains("服务启动"))
-                            ((App) mContext.getApplication()).tryConnectServer();
+                    while ((inline = reader.readLine()) != null && !br) {
                         String finalInline = inline;
                         runOnUiThread(() -> t2.append(finalInline + "\n"));
                     }
-                    br.close();
+                    reader.close();
                 } catch (Exception ignored) {
                 }
                 p.waitFor();
@@ -109,6 +112,6 @@ public class StartServerDialogBuilder extends BaseDialogBuilder {
     public void onDestroy() {
         br = true;
         h1.interrupt();
-        serverListener.interrupt();
+        mContext.mApp.removeOnServiceConnectListener(listener);
     }
 }

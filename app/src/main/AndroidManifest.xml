@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
-
-    <uses-permission android:name="android.permission.INTERNET" />
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <application
         android:name=".App"
@@ -15,8 +14,7 @@
         android:theme="@style/Theme.Light">
         <activity
             android:name=".MainActivity"
-            android:exported="true"
-            android:theme="@style/Theme.Light">
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -27,14 +25,13 @@
         <activity
             android:name="com.mai.packageviewer.activity.PackageViewerActivity"
             android:exported="true"
-            android:label="Package Viewer"
-            android:theme="@style/Theme.Light" />
+            android:label="Package Viewer" />
 
         <service
-            android:name=".service.RequestRoot"
+            android:name=".service.AuthorizeRoot"
             android:exported="true"
             android:icon="@drawable/baseline_numbers_24"
-            android:label="@string/request_root"
+            android:label="@string/authorize_root"
             android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
             <intent-filter>
                 <action android:name="android.service.quicksettings.action.QS_TILE" />
@@ -62,6 +59,19 @@
                 android:value="true" />
         </service>
 
+        <receiver
+            android:name=".receiver.ServerReceiver"
+            android:directBootAware="true"
+            android:enabled="true"
+            android:exported="true"
+            tools:ignore="ExportedReceiver">
+            <intent-filter>
+                <action android:name="shamikox.intent.action.SERVER_RUNNING" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="shamikox.intent.action.SERVER_STOPPED" />
+            </intent-filter>
+        </receiver>
     </application>
 
 </manifest>

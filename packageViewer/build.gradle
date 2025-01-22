@@ -36,7 +36,6 @@ dependencies {
 
     implementation libs.github.baserecyclerviewadapterhelper
     implementation libs.com.google.code.gson.gson
-    implementation libs.squareup.picasso
     implementation libs.pinyin4j
     implementation libs.com.github.bumptech.glide.glide
     implementation libs.core.ktx

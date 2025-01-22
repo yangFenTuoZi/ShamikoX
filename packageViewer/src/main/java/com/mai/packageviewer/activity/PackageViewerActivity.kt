@@ -5,20 +5,21 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
+import android.graphics.Color
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.provider.Settings
-import android.view.KeyEvent
-import android.view.MenuItem
-import android.view.View
+import androidx.activity.SystemBarStyle
+import androidx.activity.enableEdgeToEdge
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.color.DynamicColors
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
-import com.mai.packageviewer.ApplicationBuildConfig
 import com.mai.packageviewer.R
 import com.mai.packageviewer.adapter.AppAdapter
 import com.mai.packageviewer.data.AppInfo
@@ -47,8 +48,6 @@ class PackageViewerActivity : AppCompatActivity() {
     private var appInfoFilterList = ArrayList<AppInfo>()
     private val appAdapter = AppAdapter(appInfoFilterList)
 
-    private var onBackPressedTimeStamp = System.currentTimeMillis()
-
     private var packageReceiver = PackageReceiver { _, intent ->
         if (intent.action != null) {
             when (intent.action) {
@@ -65,11 +64,18 @@ class PackageViewerActivity : AppCompatActivity() {
 
     var choose: Boolean = false
 
+    private var loadingDialog: AlertDialog? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         DynamicColors.applyToActivityIfAvailable(this)
+        enableEdgeToEdge(
+            navigationBarStyle = SystemBarStyle.light(
+                Color.TRANSPARENT,
+                Color.TRANSPARENT
+            )
+        )
         binding = ActivityPackageViewerBinding.inflate(layoutInflater)
-        binding.loadingView.setOnClickListener {}
         setContentView(binding.root)
         choose = intent.getBooleanExtra("choose", false)
         createOptionsMenu()
@@ -119,7 +125,7 @@ class PackageViewerActivity : AppCompatActivity() {
     private fun onDataSetChanged() {
         showLoading()
         getInstallPackages { packages ->
-            if (packages.size == 1 && packages[0].packageName == ApplicationBuildConfig.APPLICATION_ID) {
+            if (packages.size == 1 && packages[0].packageName == applicationInfo.packageName) {
                 Snackbar.make(
                     binding.root,
                     R.string.can_not_get_package_list,
@@ -163,7 +169,7 @@ class PackageViewerActivity : AppCompatActivity() {
                     }
                     onOptionsChanged()
                 }
-            }, packages.size / 60 + 1)
+            }, packages.size / 60 + 1, packageManager)
         }
     }
 
@@ -179,7 +185,7 @@ class PackageViewerActivity : AppCompatActivity() {
                 // 重新过滤
                 appInfoFilterList.addAll(
                     appInfoList.filterNot {
-                        it.packageName == ApplicationBuildConfig.APPLICATION_ID
+                        it.packageName == applicationInfo.packageName
                                 || (!mainMenu.showSystemApp && it.isSystemApp)
                     }.filter { true })
             }
@@ -267,54 +273,34 @@ class PackageViewerActivity : AppCompatActivity() {
 
         }
 
+        binding.toolbar.setOnMenuItemClickListener {
+            if (::mainMenu.isInitialized) {
+                // 处理点击事件
+                if (mainMenu.onOptionsItemSelected(it))
+                    return@setOnMenuItemClickListener true
+            }
+            return@setOnMenuItemClickListener false
+        }
+
         onDataSetChanged()
     }
 
     private fun showLoading() {
-        binding.loadingView.visibility = View.VISIBLE
+        loadingDialog?.dismiss()
+        loadingDialog = MaterialAlertDialogBuilder(this)
+            .setView(R.layout.dialog_loading)
+            .setCancelable(false)
+            .create()
+        val layoutParams = loadingDialog!!.window!!.attributes
+        layoutParams.width = (resources.displayMetrics.widthPixels * 0.5).toInt()
+        loadingDialog!!.show()
         mainMenu.menu.setGroupEnabled(R.id.menu_group_sort, false)
         mainMenu.menu.setGroupEnabled(R.id.menu_group_filter_pref, false)
     }
 
     private fun hideLoading() {
-        binding.loadingView.visibility = View.GONE
+        loadingDialog?.dismiss()
         mainMenu.menu.setGroupEnabled(R.id.menu_group_sort, true)
         mainMenu.menu.setGroupEnabled(R.id.menu_group_filter_pref, true)
-    }
-
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        if (::mainMenu.isInitialized) {
-            // 处理点击事件
-            if (mainMenu.onOptionsItemSelected(item))
-                return true
-        }
-        return super.onOptionsItemSelected(item)
-    }
-
-    override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
-        return if (keyCode == KeyEvent.KEYCODE_BACK) {
-            // 判断搜索框状态
-            if (mainMenu.handleBackPresses()) {
-                true
-            } else {
-                if (System.currentTimeMillis() - onBackPressedTimeStamp > 2000L && !choose) {
-                    onBackPressedTimeStamp = System.currentTimeMillis()
-                    Snackbar.make(binding.root, getString(R.string.press_again_to_exit), 2000)
-                        .show()
-                    true
-                } else {
-                    try {
-                        if (AppInfoHelper.isRunning) {
-                            AppInfoHelper.forceStop()
-                        }
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                    }
-                    super.onKeyDown(keyCode, event)
-                }
-            }
-        } else {
-            super.onKeyDown(keyCode, event)
-        }
     }
 }

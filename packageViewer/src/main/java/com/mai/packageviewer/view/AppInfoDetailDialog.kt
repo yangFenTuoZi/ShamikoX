@@ -16,7 +16,7 @@ import com.mai.packageviewer.util.AppInfoHelper.toDetailList
 /**
  * 详情页Dialog
  */
-class AppInfoDetailDialog(val context: PackageViewerActivity, data: AppInfo) {
+class AppInfoDetailDialog(private val context: PackageViewerActivity, data: AppInfo) {
 
     val alertDialog: AlertDialog
 

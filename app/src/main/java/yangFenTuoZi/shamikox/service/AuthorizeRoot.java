@@ -1,10 +1,18 @@
 package yangFenTuoZi.shamikox.service;
 
 import android.service.quicksettings.TileService;
+import android.util.Log;
 
 import yangFenTuoZi.shamikox.App;
 
-public class RequestRoot extends TileService {
+public class AuthorizeRoot extends TileService {
+    private App mApp;
+
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        mApp = (App) getApplication();
+    }
 
     @Override
     public void onTileAdded() {
@@ -19,7 +27,14 @@ public class RequestRoot extends TileService {
     @Override
     public void onClick() {
         super.onClick();
-        new Thread(() -> ((App) getApplication()).requestRoot(-5)).start();
+        new Thread(() -> {
+            if (!mApp.isServerRunning) return;
+            try {
+                mApp.iService.authorizeForegroundApp();
+            } catch (Exception e) {
+                Log.e(getClass().getSimpleName(), Log.getStackTraceString(e));
+            }
+        }).start();
     }
 
     @Override

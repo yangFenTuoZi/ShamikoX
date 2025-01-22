@@ -2,30 +2,35 @@ package yangFenTuoZi.shamikox;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
+import android.util.Log;
 
+import androidx.activity.EdgeToEdge;
+import androidx.activity.SystemBarStyle;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
-import androidx.core.view.MenuProvider;
+import androidx.fragment.app.Fragment;
+import androidx.navigation.NavController;
+import androidx.navigation.fragment.NavHostFragment;
+import androidx.navigation.ui.NavigationUI;
 
 import com.google.android.material.color.DynamicColors;
-import com.google.android.material.materialswitch.MaterialSwitch;
-import com.mai.packageviewer.activity.PackageViewerActivity;
-import com.mai.packageviewer.setting.MainSettings;
+
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.Objects;
 
 import yangFenTuoZi.shamikox.databinding.ActivityMainBinding;
 import yangFenTuoZi.shamikox.databinding.DialogRequestRootBinding;
-import yangFenTuoZi.shamikox.dialog.BaseDialogBuilder;
-import yangFenTuoZi.shamikox.dialog.StartServerDialogBuilder;
+import yangFenTuoZi.shamikox.server.Server;
 
 public class MainActivity extends AppCompatActivity {
     private ActivityMainBinding binding;
-    private App mApp;
-    public MaterialSwitch switchWhitelist;
-    public boolean isForeground = false;
+    public App mApp;
     public boolean isDialogShow = false;
 
     private DialogRequestRootBinding dialogBinding;
@@ -37,121 +42,83 @@ public class MainActivity extends AppCompatActivity {
         }
     });
 
+
     @SuppressLint("NonConstantResourceId")
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        DynamicColors.applyToActivityIfAvailable(this);
-        binding = ActivityMainBinding.inflate(getLayoutInflater());
-        setContentView(binding.getRoot());
-        setupToolbar(binding.toolbar, getString(R.string.app_name), R.menu.menu_main);
         mApp = (App) getApplication();
 
-        switchWhitelist = binding.switchWhitelist;
-        switchWhitelist.setOnClickListener(v -> new Thread(() -> {
-            boolean isChecked = switchWhitelist.isChecked();
-            mApp.changeWhitelist(isChecked);
-        }).start());
+        DynamicColors.applyToActivityIfAvailable(this);
+        EdgeToEdge.enable(this, SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT), SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT));
 
-        binding.toolbar.setOnMenuItemClickListener(item -> {
-            int itemId = item.getItemId();
-            if (itemId == R.id.start_server) {
-                if (mApp.serverIsClosed) {
-                    if (MainSettings.INSTANCE.getBool("do_not_start_server_in_app", true)) {
-                        try {
-                            new BaseDialogBuilder(this)
-                                    .setTitle(R.string.start_server)
-                                    .setMessage(R.string.server_magisk_runner_magisk_server)
-                                    .setPositiveButton(R.string.allow_once, (dialog, which) -> {
-                                        dialog.dismiss();
-                                        isDialogShow = false;
-                                        try {
-                                            new StartServerDialogBuilder(this).show();
-                                        } catch (BaseDialogBuilder.DialogShowException ignored) {
-                                        }
-                                    })
-                                    .setNegativeButton(R.string.cancel, null)
-                                    .setNeutralButton(R.string.no_more_prompts, (dialogInterface, i) -> {
-                                        dialogInterface.dismiss();
-                                        isDialogShow = false;
-                                        MainSettings.INSTANCE.setBool("do_not_start_server_in_app", false);
-                                        try {
-                                            new StartServerDialogBuilder(this).show();
-                                        } catch (BaseDialogBuilder.DialogShowException ignored) {
-                                        }
-                                    })
-                                    .show();
-                        } catch (BaseDialogBuilder.DialogShowException ignored) {
-                        }
-                    } else {
-                        try {
-                            new StartServerDialogBuilder(this).show();
-                        } catch (BaseDialogBuilder.DialogShowException ignored) {
-                        }
-                    }
-                }
-            } else if (itemId == R.id.stop_server) {
-                if (!mApp.serverIsClosed) {
-                    try {
-                        new BaseDialogBuilder(this)
-                                .setTitle(R.string.stop_server)
-                                .setNegativeButton("Yes", (dialog, which) -> new Thread(() -> mApp.stopServer()).start())
-                                .show();
-                    } catch (BaseDialogBuilder.DialogShowException ignored) {
-                    }
-                }
-            }
-            return false;
-        });
+        binding = ActivityMainBinding.inflate(getLayoutInflater());
+        setContentView(binding.getRoot());
 
-        binding.requestRoot.setOnClickListener(v -> {
-            dialogBinding = DialogRequestRootBinding.inflate(getLayoutInflater());
-            dialogBinding.chooseApp.setOnClickListener(v1 -> launcherActivity.launch(new Intent(this, PackageViewerActivity.class).putExtra("choose", true)));
-            try {
-                new BaseDialogBuilder(this)
-                        .setTitle(R.string.request_root)
-                        .setView(dialogBinding.getRoot())
-                        .setNegativeButton(R.string.request_root, (dialog, which) -> new Thread(() -> mApp.requestRoot(Integer.parseInt(String.valueOf(dialogBinding.uid.getText())))).start())
-                        .setOnDismissListener(dialog -> dialogBinding = null)
-                        .show();
-            } catch (BaseDialogBuilder.DialogShowException ignored) {
-            }
-        });
+        Fragment fragment = Objects.requireNonNull(getSupportFragmentManager().findFragmentById(R.id.nav_host_fragment_activity_main));
+        NavController navController = ((NavHostFragment) fragment).getNavController();
+        NavigationUI.setupWithNavController(binding.navView, navController);
+
+//        binding.requestRoot.setOnClickListener(v -> {
+//            dialogBinding = DialogRequestRootBinding.inflate(getLayoutInflater());
+//            dialogBinding.chooseApp.setOnClickListener(v1 -> launcherActivity.launch(new Intent(this, PackageViewerActivity.class).putExtra("choose", true)));
+//            try {
+//                new BaseDialogBuilder(this)
+//                        .setTitle(R.string.request_root)
+//                        .setView(dialogBinding.getRoot())
+//                        .setNegativeButton(R.string.request_root, (dialog, which) -> new Thread(() -> mApp.requestRoot(Integer.parseInt(String.valueOf(dialogBinding.uid.getText())))).start())
+//                        .setOnDismissListener(dialog -> dialogBinding = null)
+//                        .show();
+//            } catch (BaseDialogBuilder.DialogShowException ignored) {
+//            }
+//        });
 
         mApp.main = this;
 
+        writeStarter();
     }
 
-    @Override
-    protected void onStart() {
-        super.onStart();
-        isForeground = true;
-        new Thread(() -> runOnUiThread(() -> {
-            switchWhitelist.setChecked(mApp.isWhitelist);
-            if (mApp.serverIsClosed) switchWhitelist.setEnabled(false);
-        })).start();
-    }
-
-    @Override
-    protected void onStop() {
-        super.onStop();
-    }
-
-    public void setupToolbar(Toolbar toolbar, String title, int menu) {
-        toolbar.setTitle(title);
-        toolbar.setTooltipText(title);
-        if (menu != -1) {
-            toolbar.inflateMenu(menu);
-            if (this instanceof MenuProvider self) {
-                self.onPrepareMenu(toolbar.getMenu());
+    private void writeStarter() {
+        // server_starter
+        try {
+            String starter_content = String.format("""
+                    #!/system/bin/sh
+                    log() {
+                        echo "[$(date "%s")] [server_starter] [$1] $2"
+                    }
+                    log I "Begin"
+                    
+                    # check uid
+                    uid=$(id -u)
+                    if [ ! $uid -eq 0 ] && [ ! $uid -eq 2000 ]; then
+                        log E "Insufficient permission! Need to be launched by root or shell, but your uid is $uid." >&2
+                        exit 255
+                    fi
+                    
+                    # start server
+                    log I "Start server"
+                    pkill -f %3$s 2>&1 >/dev/null
+                    app_process -Djava.class.path="$(pm path %2$s | sed 's/package://')" /system/bin --nice-name=%3$s %4$s
+                    exitValue=$?
+                    while [ $exitValue -eq 10 ]; do
+                        pkill -f %3$s 2>&1 >/dev/null
+                        app_process -Djava.class.path="$(pm path %2$s | sed 's/package://')" /system/bin --nice-name=%3$s %4$s restart
+                        exitValue=$?
+                    done
+                    exit $exitValue
+                    """, "+%H:%M:%S", BuildConfig.APPLICATION_ID, Server.TAG, Server.class.getName());
+            File starter = new File(getExternalFilesDir(""), "server_starter.sh");
+            if (starter.exists()) {
+                starter.delete();
+                starter.createNewFile();
             }
+            FileWriter fileWriter = new FileWriter(starter);
+            fileWriter.write(starter_content);
+            fileWriter.flush();
+            fileWriter.close();
+        } catch (IOException e) {
+            Log.e(getClass().getSimpleName(), Log.getStackTraceString(e));
         }
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        binding = null;
     }
 
 }
