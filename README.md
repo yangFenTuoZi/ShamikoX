@@ -18,5 +18,5 @@
 # 贡献
 
 - [PackageViewer](https://github.com/MaYiFei1995/PackageViewer): 提供选择app功能，用于自定义app授予root权限
-- [ServerTemplate](https://github.com/yangFenTuoZi/SeverTemplate): 服务模板，更简单实现服务功能
+- [ServerTemplate](https://github.com/yangFenTuoZi/ServerTemplate): 服务模板，更简单实现服务功能
 - [HiddenApi](https://github.com/RikkaW/HiddenApi): 调用隐藏api
