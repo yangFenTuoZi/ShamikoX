@@ -23,5 +23,3 @@ dependencyResolutionManagement {
 rootProject.name = 'ShamikoX'
 include ':app'
 include ':packageViewer'
-include ':hiddenapi:stubs'
-include ':hiddenapi:bridge'

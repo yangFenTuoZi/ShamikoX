@@ -42,7 +42,9 @@ dependencies {
     implementation libs.constraintlayout
     implementation libs.coordinatorlayout
     implementation libs.swiperefreshlayout
+    implementation libs.severtemplate
 
     implementation project(':packageViewer')
-    compileOnly project(':hiddenapi:stubs')
+
+    compileOnly libs.hidden.stub
 }
