@@ -42,7 +42,7 @@ dependencies {
     implementation libs.constraintlayout
     implementation libs.coordinatorlayout
     implementation libs.swiperefreshlayout
-    implementation libs.severtemplate
+    implementation libs.servertemplate
 
     implementation project(':packageViewer')
 

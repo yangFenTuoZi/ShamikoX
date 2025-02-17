@@ -12,7 +12,7 @@ navigationUi = "2.8.7"
 pinyin4j = "2.5.0"
 preference = "1.2.1"
 activity = "1.10.0"
-severtemplate = "1.0.0-alpha.1"
+servertemplate = "1.0.0-alpha.1"
 swiperefreshlayout = "1.1.0"
 kotlin = "2.1.0"
 coreKtx = "1.15.0"
@@ -31,7 +31,7 @@ navigation-ui = { group = "androidx.navigation", name = "navigation-ui", version
 pinyin4j = { module = "com.belerweb:pinyin4j", version.ref = "pinyin4j" }
 preference = { group = "androidx.preference", name = "preference", version.ref = "preference" }
 activity = { group = "androidx.activity", name = "activity", version.ref = "activity" }
-severtemplate = { module = "com.github.yangFenTuoZi:SeverTemplate", version.ref = "severtemplate" }
+servertemplate = { module = "com.github.yangFenTuoZi:ServerTemplate", version.ref = "servertemplate" }
 swiperefreshlayout = { group = "androidx.swiperefreshlayout", name = "swiperefreshlayout", version.ref = "swiperefreshlayout" }
 core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 hidden-stub = { group = "dev.rikka.hidden", name = "stub", version.ref = "hidden-api" }
