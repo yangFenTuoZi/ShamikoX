@@ -27,7 +27,6 @@ import java.util.List;
 
 import yangFenTuoZi.server.Logger;
 import yangFenTuoZi.server.ServerTemplate;
-import yangFenTuoZi.server.fakecontext.FakeContext;
 import yangFenTuoZi.shamikox.BuildConfig;
 import yangFenTuoZi.shamikox.server.magisk.MagiskDB;
 import yangFenTuoZi.shamikox.server.magisk.SuPolicy;
@@ -42,7 +41,6 @@ public class Server extends ServerTemplate {
     Logger Log;
     boolean isStop = false;
     String appPath;
-    FakeContext mContext;
     Context appContext;
     File whiteListFile = new File("/data/adb/shamiko/whitelist");
     IBinder binder;
@@ -51,7 +49,6 @@ public class Server extends ServerTemplate {
         Args.Builder builder = new Args.Builder();
         builder.uids = new int[]{0};
         builder.serverName = TAG;
-        builder.enableFakeContext = true;
         builder.enableLogger = true;
         builder.logDir = new File("/data/adb/shamikox_logs");
         new Server(builder.build());
@@ -69,35 +66,33 @@ public class Server extends ServerTemplate {
         File magisk_data = new File(MagiskDB.DB_FILE);
         if (!magisk_data.exists() || magisk_data.isFile()) {
             Log.e("Only Magisk is supported.");
-            exit(255);
+            finish(255);
         }
 
         File shamiko = new File("/data/adb/modules/zygisk_shamiko");
         if (!shamiko.exists() || shamiko.isFile()) {
             Log.e("Do not install 'Shamiko' module.");
-            exit(255);
+            finish(255);
         }
 
         File shamikoEnable = new File("/data/adb/shamiko");
         if (!shamikoEnable.exists() || shamikoEnable.isFile()) {
             Log.e("'%s' not found, try rebooting your device.", shamikoEnable.getPath());
-            exit(255);
+            finish(255);
         }
-
-        mContext = getContext();
         try {
-            appContext = mContext.createPackageContext(BuildConfig.APPLICATION_ID, Context.CONTEXT_IGNORE_SECURITY);
+            appContext = createPackageContext(BuildConfig.APPLICATION_ID, Context.CONTEXT_IGNORE_SECURITY);
         } catch (PackageManager.NameNotFoundException e) {
             throw new RuntimeException(e);
         }
 
-        packageManager = mContext.getPackageManager();
+        packageManager = getPackageManager();
 
         try {
             appPath = getApplicationInfo(BuildConfig.APPLICATION_ID).sourceDir;
         } catch (Throwable e) {
             Log.e("Unable to get app path!\n" + getStackTraceString(e));
-            exit(1);
+            finish(1);
         }
 
         magiskDB = new MagiskDB();
@@ -113,13 +108,13 @@ public class Server extends ServerTemplate {
                             appPath = getApplicationInfo(BuildConfig.APPLICATION_ID).sourceDir;
                             if (appPath == null || appPath.isEmpty()) {
                                 Log.w("App is uninstalled!");
-                                exit(1);
+                                finish(1);
                             } else {
-                                exit(10);
+                                finish(10);
                             }
                         } catch (Exception e) {
                             Log.w("App is uninstalled!");
-                            exit(1);
+                            finish(1);
                         }
                         break;
                     }
@@ -169,7 +164,7 @@ public class Server extends ServerTemplate {
     private void collapsePanels() {
         try {
             Class<?> statusBarManagerClass = Class.forName("android.app.StatusBarManager");
-            Object statusBarManager = mContext.getSystemService(statusBarManagerClass);
+            Object statusBarManager = getSystemService(statusBarManagerClass);
             Method collapsePanelsMethod = statusBarManagerClass.getMethod("collapsePanels");
             collapsePanelsMethod.invoke(statusBarManager);
         } catch (Exception e) {
@@ -190,7 +185,7 @@ public class Server extends ServerTemplate {
         isStop = true;
 
         if (magiskDB != null) magiskDB.close();
-        if (mContext != null) mContext.sendBroadcast(new Intent(Server.ACTION_SERVER_STOPPED)
+        sendBroadcast(new Intent(Server.ACTION_SERVER_STOPPED)
                 .setPackage(BuildConfig.APPLICATION_ID)
                 .addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES));
 
@@ -229,7 +224,7 @@ public class Server extends ServerTemplate {
             @Override
             public void stopServer() {
                 isStop = true;
-                exit(0);
+                finish(0);
             }
 
             @Override
@@ -333,7 +328,7 @@ public class Server extends ServerTemplate {
                     SpannableString msg = new SpannableString(msgText);
                     msg.setSpan(new StyleSpan(Typeface.BOLD), 0, appName.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
 
-                   runOnMainThread(() -> Toast.makeText(mContext, msg, Toast.LENGTH_SHORT).show());
+                   runOnMainThread(() -> Toast.makeText(Server.this, msg, Toast.LENGTH_SHORT).show());
                 } catch (PackageManager.NameNotFoundException e) {
                     Log.e(getStackTraceString(e));
                 }
@@ -343,7 +338,7 @@ public class Server extends ServerTemplate {
 
     public String getTopFullscreenOpaqueWindowPackageName() {
         try {
-            ActivityManager activityManager = (ActivityManager) mContext.getSystemService(Context.ACTIVITY_SERVICE);
+            ActivityManager activityManager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
             List<ActivityManager.RunningAppProcessInfo> tasks = activityManager.getRunningAppProcesses();
             if (tasks != null && !tasks.isEmpty()) {
                 ActivityManager.RunningAppProcessInfo appTask = tasks.get(0);
@@ -356,7 +351,7 @@ public class Server extends ServerTemplate {
     }
 
     public boolean isAppRunning(String packageName) {
-        ActivityManager activityManager = (ActivityManager) mContext.getSystemService(Context.ACTIVITY_SERVICE);
+        ActivityManager activityManager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
         List<ActivityManager.RunningAppProcessInfo> processes = activityManager.getRunningAppProcesses();
         for (ActivityManager.RunningAppProcessInfo processInfo : processes) {
             if (processInfo.processName.equals(packageName)) {
